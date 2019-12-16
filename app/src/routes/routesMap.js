@@ -112,6 +112,7 @@ const routesMap = {
   USER_PROFILE_PAGE: '/user-profile',
 
   API_PAGE: '/api',
+  TEST_COMPONENTS_PAGE: `/testPage`,
 
   [PROJECTS_PAGE]: {
     path: '/administrate/projects',

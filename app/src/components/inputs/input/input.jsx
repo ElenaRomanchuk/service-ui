@@ -39,6 +39,7 @@ export const Input = ({
   onKeyPress,
   touched,
   asyncValidating,
+  customProps,
 }) => (
   <input
     ref={refFunction}
@@ -61,6 +62,7 @@ export const Input = ({
     onBlur={onBlur}
     onKeyUp={onKeyUp}
     onKeyPress={onKeyPress}
+    {...customProps}
   />
 );
 
@@ -82,6 +84,7 @@ Input.propTypes = {
   refFunction: PropTypes.func,
   touched: PropTypes.bool,
   asyncValidating: PropTypes.bool,
+  customProps: PropTypes.object,
 };
 
 Input.defaultProps = {
@@ -102,4 +105,5 @@ Input.defaultProps = {
   onKeyUp: () => {},
   onKeyPress: () => {},
   refFunction: () => {},
+  customProps: {},
 };

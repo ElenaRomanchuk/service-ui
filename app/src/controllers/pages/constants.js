@@ -55,6 +55,8 @@ export const LOGIN_PAGE = 'LOGIN_PAGE';
 export const REGISTRATION_PAGE = 'REGISTRATION_PAGE';
 export const HOME_PAGE = 'HOME_PAGE';
 
+export const TEST_COMPONENTS_PAGE = 'TEST_COMPONENTS_PAGE';
+
 export const pageNames = {
   [NOT_FOUND]: NOT_FOUND,
   ADMINISTRATE_PAGE,
@@ -86,6 +88,7 @@ export const pageNames = {
   PROJECT_LOG_PAGE,
   PROJECT_USERDEBUG_LOG_PAGE,
   OAUTH_SUCCESS,
+  TEST_COMPONENTS_PAGE,
 };
 
 export const adminPageNames = {

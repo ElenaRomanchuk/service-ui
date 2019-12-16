@@ -50,6 +50,8 @@ import {
   OAUTH_SUCCESS,
 } from 'controllers/pages';
 
+import { TestComponentsPage } from 'pages/testComponentsPage/testComponentsPage';
+
 export const ANONYMOUS_ACCESS = 'anonymous';
 export const ADMIN_ACCESS = 'admin';
 
@@ -93,4 +95,8 @@ export const pageRendering = {
   [PROJECT_LOG_PAGE]: { component: LogsPage, layout: AppLayout },
   [PROJECT_USERDEBUG_LOG_PAGE]: { component: LogsPage, layout: AppLayout },
   [HISTORY_PAGE]: { component: HistoryPage, layout: AppLayout },
+  TEST_COMPONENTS_PAGE: {
+    component: TestComponentsPage,
+    layout: AppLayout,
+  },
 };

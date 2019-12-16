@@ -75,6 +75,7 @@ export {
   adminPageNames,
   OAUTH_SUCCESS,
   HOME_PAGE,
+  TEST_COMPONENTS_PAGE,
 } from './constants';
 export { NOT_FOUND } from 'redux-first-router';
 export { pageSagas } from './sagas';

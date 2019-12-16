@@ -1,0 +1,1 @@
+export { InputSingleAutocomplete } from './inputSingleAutocomplete';
