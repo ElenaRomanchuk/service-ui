@@ -30,7 +30,7 @@ export class SingleAutocomplete extends Component {
   static propTypes = {
     options: PropTypes.array,
     loading: PropTypes.bool,
-    onStateChanges: PropTypes.func,
+    onStateChange: PropTypes.func,
     value: PropTypes.any,
     placeholder: PropTypes.string,
     error: PropTypes.string,
@@ -47,12 +47,12 @@ export class SingleAutocomplete extends Component {
     renderOption: PropTypes.func,
     createNewOption: PropTypes.func,
     minLength: PropTypes.number,
+    async: PropTypes.bool,
   };
 
   static defaultProps = {
     options: [],
     loading: false,
-    onStateChanges: () => {},
     value: '',
     placeholder: '',
     error: '',
@@ -69,21 +69,21 @@ export class SingleAutocomplete extends Component {
     renderOption: null,
     createNewOption: (inputValue) => inputValue,
     minLength: 1,
+    async: false,
   };
 
-  getOptionProps = (getItemProps, highlightedIndex, selectedItem) => (item, index) =>
+  getOptionProps = (getItemProps, highlightedIndex, selectedItem) => ({ item, index, ...rest }) =>
     getItemProps({
       item,
       index,
       isActive: highlightedIndex === index,
       isSelected: selectedItem === item,
+      ...rest,
     });
 
   render() {
     const {
-      options,
-      loading,
-      onStateChanges,
+      onStateChange,
       onChange,
       onBlur,
       onFocus,
@@ -95,18 +95,14 @@ export class SingleAutocomplete extends Component {
       mobileDisabled,
       value,
       inputProps,
-      creatable,
-      createNewOption,
-      isValidNewOption,
-      minLength,
-      renderOption,
+      ...props
     } = this.props;
     return (
       <Downshift
         onChange={onChange}
         itemToString={parseValueToString}
         selectedItem={value}
-        onStateChanges={onStateChanges}
+        onStateChange={onStateChange}
       >
         {({
           getInputProps,
@@ -150,16 +146,10 @@ export class SingleAutocomplete extends Component {
             </div>
             <AutocompleteMenu {...getMenuProps({ isOpen })}>
               <AutocompleteOptions
-                options={options}
-                loading={loading}
                 inputValue={(inputValue || '').trim()}
-                minLength={minLength}
-                creatable={creatable}
-                getOptionProps={this.getOptionProps(getItemProps, highlightedIndex, value)}
-                renderOption={renderOption}
-                createNewOption={createNewOption}
+                getItemProps={this.getOptionProps(getItemProps, highlightedIndex, value)}
                 parseValueToString={parseValueToString}
-                isValidNewOption={isValidNewOption}
+                {...props}
               />
             </AutocompleteMenu>
           </div>

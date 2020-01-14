@@ -31,7 +31,7 @@ export class MultipleAutocomplete extends Component {
   static propTypes = {
     options: PropTypes.array,
     loading: PropTypes.bool,
-    onStateChanges: PropTypes.func,
+    onStateChange: PropTypes.func,
     value: PropTypes.array,
     placeholder: PropTypes.string,
     error: PropTypes.string,
@@ -48,12 +48,13 @@ export class MultipleAutocomplete extends Component {
     renderOption: PropTypes.func,
     createNewOption: PropTypes.func,
     minLength: PropTypes.number,
+    async: PropTypes.bool,
   };
 
   static defaultProps = {
     options: [],
     loading: false,
-    onStateChanges: () => {},
+    onStateChange: () => {},
     value: [],
     placeholder: '',
     error: '',
@@ -70,24 +71,24 @@ export class MultipleAutocomplete extends Component {
     renderOption: null,
     createNewOption: (inputValue) => inputValue,
     minLength: 1,
+    async: false,
   };
 
   state = {
     focused: false,
   };
 
-  getOptionProps = (getItemProps, highlightedIndex, selectedItems) => (item, index) =>
+  getOptionProps = (getItemProps, highlightedIndex, selectedItems) => ({ item, index, ...rest }) =>
     getItemProps({
       item,
       index,
       isActive: highlightedIndex === index,
       isSelected: selectedItems.indexOf(item) > -1,
+      ...rest,
     });
 
   render() {
     const {
-      options,
-      loading,
       onChange,
       onBlur,
       onFocus,
@@ -99,10 +100,8 @@ export class MultipleAutocomplete extends Component {
       mobileDisabled,
       value = [],
       inputProps,
-      creatable,
-      createNewOption,
-      isValidNewOption,
-      renderOption,
+      onStateChange,
+      ...props
     } = this.props;
     const { focused } = this.state;
     const isClearable = !!(value && value.length && !disabled);
@@ -111,6 +110,7 @@ export class MultipleAutocomplete extends Component {
         onChange={onChange}
         itemToString={parseValueToString}
         selectedItems={value}
+        onStateChange={onStateChange}
       >
         {({
           getInputProps,
@@ -183,15 +183,10 @@ export class MultipleAutocomplete extends Component {
             </div>
             <AutocompleteMenu {...getMenuProps({ isOpen })}>
               <AutocompleteOptions
-                options={options}
-                loading={loading}
                 inputValue={(inputValue || '').trim()}
-                creatable={creatable}
-                getOptionProps={this.getOptionProps(getItemProps, highlightedIndex, value)}
-                renderOption={renderOption}
-                createNewOption={createNewOption}
+                getItemProps={this.getOptionProps(getItemProps, highlightedIndex, value)}
                 parseValueToString={parseValueToString}
-                isValidNewOption={isValidNewOption}
+                {...props}
               />
             </AutocompleteMenu>
           </div>

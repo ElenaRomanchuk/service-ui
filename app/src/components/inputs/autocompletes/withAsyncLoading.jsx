@@ -20,14 +20,14 @@ import { debounce, fetch, ERROR_CANCELED } from 'common/utils';
 
 export const WithAsyncLoading = (AutocompleteComponent) =>
   class WrappedAutocomplete extends Component {
-    propTypes = {
+    static propTypes = {
       getURI: PropTypes.func,
       makeOptions: PropTypes.func,
       filterOption: PropTypes.func,
       minLength: PropTypes.number,
     };
 
-    defaultProps = {
+    static defaultProps = {
       getURI: () => '',
       makeOptions: (values) => values,
       filterOption: () => true,
@@ -82,7 +82,7 @@ export const WithAsyncLoading = (AutocompleteComponent) =>
       this.cancelDebounce = this.debouncedFetch(inputValue);
     };
 
-    handleStateChanges = (changes, { isOpen, inputValue }) => {
+    handleStateChange = (changes, { isOpen, inputValue }) => {
       if (!isOpen) return;
 
       if (
@@ -99,7 +99,8 @@ export const WithAsyncLoading = (AutocompleteComponent) =>
         <AutocompleteComponent
           options={options}
           loading={loading}
-          onStateChanges={this.handleStateChanges}
+          onStateChange={this.handleStateChange}
+          async
           {...this.props}
         />
       );

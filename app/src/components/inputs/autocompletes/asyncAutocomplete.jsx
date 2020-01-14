@@ -17,4 +17,4 @@
 import { WithAsyncLoading } from './withAsyncLoading';
 import { SingleAutocomplete } from './singleAutocomplete';
 
-export const AsycnAutocomplete = WithAsyncLoading(SingleAutocomplete);
+export const AsyncAutocomplete = WithAsyncLoading(SingleAutocomplete);

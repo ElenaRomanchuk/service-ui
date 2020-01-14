@@ -32,8 +32,9 @@ export class AutocompleteOptions extends Component {
     creatable: PropTypes.bool,
     parseValueToString: PropTypes.func,
     isValidNewOption: PropTypes.func,
-    getOptionProps: PropTypes.func,
+    getItemProps: PropTypes.func,
     renderOption: PropTypes.func,
+    async: PropTypes.bool,
   };
 
   static defaultProps = {
@@ -46,13 +47,16 @@ export class AutocompleteOptions extends Component {
     createNewOption: (inputValue) => inputValue,
     parseValueToString: (value) => value || '',
     isValidNewOption: () => true,
-    getOptionProps: () => {},
+    getItemProps: () => {},
     renderOption: null,
+    async: false,
   };
 
-  getOptions = () => {
-    const { options, inputValue } = this.props;
-    return options.filter((option) => option.indexOf((inputValue || '').trim()) > -1);
+  filterStaticOptions = () => {
+    const { options, inputValue, parseValueToString } = this.props;
+    return (options || []).filter(
+      (option) => parseValueToString(option).indexOf((inputValue || '').trim()) > -1,
+    );
   };
 
   getPrompt = (options) => {
@@ -99,13 +103,13 @@ export class AutocompleteOptions extends Component {
   };
 
   renderItem = (item, index, isNew = false) => {
-    const { getOptionProps, renderOption } = this.props;
+    const { getItemProps, renderOption } = this.props;
     return renderOption ? (
-      renderOption(item, index, isNew, getOptionProps)
+      renderOption(item, index, isNew, getItemProps)
     ) : (
       <AutocompleteOption
         key={this.props.parseValueToString(item)}
-        {...getOptionProps(item, index)}
+        {...getItemProps({ item, index })}
         isNew={isNew}
       >
         {this.props.parseValueToString(item)}
@@ -128,7 +132,7 @@ export class AutocompleteOptions extends Component {
   };
 
   render() {
-    const options = this.getOptions();
+    const options = this.props.async ? this.props.options : this.filterStaticOptions();
     const prompt = this.getPrompt(options);
     if (prompt) return prompt;
 
