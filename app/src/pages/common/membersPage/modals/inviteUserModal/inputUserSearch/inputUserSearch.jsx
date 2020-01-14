@@ -20,10 +20,10 @@ import { AsyncAutocomplete } from 'components/inputs/autocompletes/asyncAutocomp
 import { InviteNewUserItem } from './inviteNewUserItem';
 import { UserItem } from './userItem';
 
-const isValidNewOption = (label) => validate.email(label);
-const newOptionCreator = (label) => ({
+const isValidNewOption = (inputValue) => validate.email(inputValue);
+const newOptionCreator = (inputValue) => ({
   externalUser: true,
-  userLogin: label,
+  userLogin: inputValue,
 });
 const getURI = (isAdmin, projectId) => (input) =>
   isAdmin ? URLS.searchUsers(input) : URLS.projectUserSearchUser(projectId, input);
@@ -38,27 +38,15 @@ const makeOptions = (projectId) => ({ content: options }) =>
     assignedProjects: option.assignedProjects || {},
   }));
 
-const parseValueToString = (option) => (option ? option.label : '');
+const parseValueToString = (option) => (option ? option.userLogin : '');
 
-const renderOption = (option, index, isNew, getItemProps, highlightedIndex) =>
+const renderOption = (option, index, isNew, getItemProps) =>
   isNew ? (
-    <InviteNewUserItem
-      option={option}
-      itemProps={getItemProps({
-        item: option,
-        index,
-        isActive: highlightedIndex === index,
-      })}
-    />
+    <InviteNewUserItem option={option} itemProps={getItemProps({ item: option, index })} />
   ) : (
     <UserItem
       key={option.userLogin}
-      itemProps={getItemProps({
-        item: option,
-        index,
-        isActive: isNew || highlightedIndex === index,
-        disabled: option.isAssigned,
-      })}
+      itemProps={getItemProps({ item: option, index })}
       option={option}
     />
   );

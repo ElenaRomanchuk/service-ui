@@ -44,11 +44,11 @@ storiesOf('Components/Inputs/InputUserSearch', module)
   .add('non admin, projectId="superadmin_personal", with actions', () => {
     const mock = new MockAdapter(axios);
     const API_REQUEST =
-      '/api/v1/project/superadmin_personal/usernames/search?page.page=1&page.size=10&page.sort=user%2CASC&term=test';
+      '/api/v1/project/superadmin_personal/usernames/search?page.page=1&page.size=10&page.sort=user%2CASC&term=e';
     mock.onGet(API_REQUEST).reply(200, mockData);
     return (
       <InputUserSearch
-        placeholder="Type 'test'"
+        placeholder="Type 'e'"
         onChange={action('Select user')}
         projectId="superadmin_personal"
       />
@@ -56,13 +56,13 @@ storiesOf('Components/Inputs/InputUserSearch', module)
   })
   .add('Admin,projectId="superadmin_personal", with actions', () => {
     const mock = new MockAdapter(axios);
-    const API_REQUEST = '/api/v1/user/search?term=test';
+    const API_REQUEST = '/api/v1/user/search?term=e';
     mock.onGet(API_REQUEST).reply(200, mockData);
     return (
       <InputUserSearch
         isAdmin
         projectId="superadmin_personal"
-        placeholder="Type 'test'"
+        placeholder="Type 'e'"
         onChange={action('Select user')}
       />
     );
