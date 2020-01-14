@@ -19,7 +19,6 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames/bind';
 import Parser from 'html-react-parser';
 import CrossIcon from 'common/img/cross-icon-inline.svg';
-import { AutocompleteOption } from './../common/autocompleteOption';
 import { AutocompleteOptions } from './../common/autocompleteOptions';
 import { AutocompleteMenu } from './../common/autocompleteMenu';
 import { SelectedItems } from './selectedItems';
@@ -77,23 +76,13 @@ export class MultipleAutocomplete extends Component {
     focused: false,
   };
 
-  renderItem = (getItemProps, highlightedIndex, selectedItems) => (item, index, isNew) =>
-    this.props.renderOption ? (
-      this.props.renderOption(item, index, isNew, getItemProps, highlightedIndex, selectedItems)
-    ) : (
-      <AutocompleteOption
-        key={this.props.parseValueToString(item)}
-        {...getItemProps({
-          item,
-          index,
-          isActive: highlightedIndex === index,
-          isSelected: selectedItems.indexOf(item) > -1,
-        })}
-        isNew={isNew}
-      >
-        {this.props.parseValueToString(item)}
-      </AutocompleteOption>
-    );
+  getOptionProps = (getItemProps, highlightedIndex, selectedItems) => (item, index) =>
+    getItemProps({
+      item,
+      index,
+      isActive: highlightedIndex === index,
+      isSelected: selectedItems.indexOf(item) > -1,
+    });
 
   render() {
     const {
@@ -113,6 +102,7 @@ export class MultipleAutocomplete extends Component {
       creatable,
       createNewOption,
       isValidNewOption,
+      renderOption,
     } = this.props;
     const { focused } = this.state;
     const isClearable = !!(value && value.length && !disabled);
@@ -197,7 +187,8 @@ export class MultipleAutocomplete extends Component {
                 loading={loading}
                 inputValue={(inputValue || '').trim()}
                 creatable={creatable}
-                renderItem={this.renderItem(getItemProps, highlightedIndex, value)}
+                getOptionProps={this.getOptionProps(getItemProps, highlightedIndex, value)}
+                renderOption={renderOption}
                 createNewOption={createNewOption}
                 parseValueToString={parseValueToString}
                 isValidNewOption={isValidNewOption}

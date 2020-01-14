@@ -18,6 +18,7 @@ import { Component } from 'react';
 import PropTypes from 'prop-types';
 import { FormattedMessage } from 'react-intl';
 import { AutocompletePrompt } from './autocompletePrompt';
+import { AutocompleteOption } from './autocompleteOption';
 
 export class AutocompleteOptions extends Component {
   static propTypes = {
@@ -31,6 +32,8 @@ export class AutocompleteOptions extends Component {
     creatable: PropTypes.bool,
     parseValueToString: PropTypes.func,
     isValidNewOption: PropTypes.func,
+    getOptionProps: PropTypes.func,
+    renderOption: PropTypes.func,
   };
 
   static defaultProps = {
@@ -43,6 +46,8 @@ export class AutocompleteOptions extends Component {
     createNewOption: (inputValue) => inputValue,
     parseValueToString: (value) => value || '',
     isValidNewOption: () => true,
+    getOptionProps: () => {},
+    renderOption: null,
   };
 
   getOptions = () => {
@@ -93,18 +98,33 @@ export class AutocompleteOptions extends Component {
     );
   };
 
+  renderItem = (item, index, isNew = false) => {
+    const { getOptionProps, renderOption } = this.props;
+    return renderOption ? (
+      renderOption(item, index, isNew, getOptionProps)
+    ) : (
+      <AutocompleteOption
+        key={this.props.parseValueToString(item)}
+        {...getOptionProps(item, index)}
+        isNew={isNew}
+      >
+        {this.props.parseValueToString(item)}
+      </AutocompleteOption>
+    );
+  };
+
   renderItems = (options) => {
-    const { inputValue, renderItem, createNewOption } = this.props;
+    const { inputValue, createNewOption } = this.props;
     let newItem = null;
 
     if (this.canCreateNewItem(options)) {
       newItem = createNewOption(inputValue);
       return [newItem, ...options].map((item, index) =>
-        renderItem(item, index, newItem && index === 0),
+        this.renderItem(item, index, newItem && index === 0),
       );
     }
 
-    return options.map((item, index) => renderItem(item, index));
+    return options.map((item, index) => this.renderItem(item, index));
   };
 
   render() {

@@ -20,7 +20,6 @@ import Parser from 'html-react-parser';
 import CrossIcon from 'common/img/cross-icon-inline.svg';
 import PropTypes from 'prop-types';
 import classNames from 'classnames/bind';
-import { AutocompleteOption } from './../common/autocompleteOption';
 import { AutocompleteOptions } from './../common/autocompleteOptions';
 import { AutocompleteMenu } from './../common/autocompleteMenu';
 import styles from './singleAutocomplete.scss';
@@ -72,23 +71,13 @@ export class SingleAutocomplete extends Component {
     minLength: 1,
   };
 
-  renderItem = (getItemProps, highlightedIndex, selectedItem) => (item, index, isNew = false) =>
-    this.props.renderOption ? (
-      this.props.renderOption(item, index, isNew, getItemProps, highlightedIndex, selectedItem)
-    ) : (
-      <AutocompleteOption
-        key={this.props.parseValueToString(item)}
-        {...getItemProps({
-          item,
-          index,
-          isActive: isNew || highlightedIndex === index,
-          isSelected: selectedItem === item,
-        })}
-        isNew={isNew}
-      >
-        {this.props.parseValueToString(item)}
-      </AutocompleteOption>
-    );
+  getOptionProps = (getItemProps, highlightedIndex, selectedItem) => (item, index) =>
+    getItemProps({
+      item,
+      index,
+      isActive: highlightedIndex === index,
+      isSelected: selectedItem === item,
+    });
 
   render() {
     const {
@@ -110,6 +99,7 @@ export class SingleAutocomplete extends Component {
       createNewOption,
       isValidNewOption,
       minLength,
+      renderOption,
     } = this.props;
     return (
       <Downshift
@@ -165,7 +155,8 @@ export class SingleAutocomplete extends Component {
                 inputValue={(inputValue || '').trim()}
                 minLength={minLength}
                 creatable={creatable}
-                renderItem={this.renderItem(getItemProps, highlightedIndex, value)}
+                getOptionProps={this.getOptionProps(getItemProps, highlightedIndex, value)}
+                renderOption={renderOption}
                 createNewOption={createNewOption}
                 parseValueToString={parseValueToString}
                 isValidNewOption={isValidNewOption}
