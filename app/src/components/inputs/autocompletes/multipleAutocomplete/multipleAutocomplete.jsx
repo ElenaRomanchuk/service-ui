@@ -15,29 +15,29 @@
  */
 
 import React, { Component } from 'react';
-import { FormattedMessage } from 'react-intl';
-import Downshift from 'downshift';
-import Parser from 'html-react-parser';
-import CrossIcon from 'common/img/cross-icon-inline.svg';
 import PropTypes from 'prop-types';
 import classNames from 'classnames/bind';
+import Parser from 'html-react-parser';
+import CrossIcon from 'common/img/cross-icon-inline.svg';
 import { AutocompleteOption } from './../common/autocompleteOption';
-import { AsyncAutocompleteOptions } from './../common/asyncAutocompleteOptions';
+import { AutocompleteOptions } from './../common/autocompleteOptions';
 import { AutocompleteMenu } from './../common/autocompleteMenu';
-import { AutocompletePrompt } from './../common/autocompletePrompt';
-import styles from './asyncAutocomplete.scss';
+import { SelectedItems } from './selectedItems';
+import { MultipleDownshift } from './multipleDownshift';
+import styles from './multipleAutocomplete.scss';
 
 const cx = classNames.bind(styles);
 
-export class AsyncAutocomplete extends Component {
+export class MultipleAutocomplete extends Component {
   static propTypes = {
-    getURI: PropTypes.string,
-    value: PropTypes.any,
+    options: PropTypes.array,
+    loading: PropTypes.bool,
+    onStateChanges: PropTypes.func,
+    value: PropTypes.array,
     placeholder: PropTypes.string,
     error: PropTypes.string,
     touched: PropTypes.bool,
     creatable: PropTypes.bool,
-    makeOptions: PropTypes.func,
     onChange: PropTypes.func,
     onFocus: PropTypes.func,
     onBlur: PropTypes.func,
@@ -45,7 +45,6 @@ export class AsyncAutocomplete extends Component {
     disabled: PropTypes.bool,
     mobileDisabled: PropTypes.bool,
     inputProps: PropTypes.object,
-    filterOption: PropTypes.func,
     parseValueToString: PropTypes.func,
     renderOption: PropTypes.func,
     createNewOption: PropTypes.func,
@@ -53,13 +52,14 @@ export class AsyncAutocomplete extends Component {
   };
 
   static defaultProps = {
-    getURI: () => '',
-    value: '',
+    options: [],
+    loading: false,
+    onStateChanges: () => {},
+    value: [],
     placeholder: '',
     error: '',
     touched: false,
     creatable: false,
-    makeOptions: (values) => values,
     onChange: () => {},
     isValidNewOption: () => true,
     onFocus: () => {},
@@ -67,24 +67,27 @@ export class AsyncAutocomplete extends Component {
     disabled: false,
     mobileDisabled: false,
     inputProps: {},
-    filterOption: () => true,
     parseValueToString: (value) => value || '',
     renderOption: null,
     createNewOption: (inputValue) => inputValue,
     minLength: 1,
   };
 
-  renderItem = (getItemProps, highlightedIndex, selectedItem) => (item, index, isNew = false) =>
+  state = {
+    focused: false,
+  };
+
+  renderItem = (getItemProps, highlightedIndex, selectedItems) => (item, index, isNew) =>
     this.props.renderOption ? (
-      this.props.renderOption(item, index, isNew, getItemProps, highlightedIndex, selectedItem)
+      this.props.renderOption(item, index, isNew, getItemProps, highlightedIndex, selectedItems)
     ) : (
       <AutocompleteOption
         key={this.props.parseValueToString(item)}
         {...getItemProps({
           item,
           index,
-          isActive: isNew || highlightedIndex === index,
-          isSelected: selectedItem === item,
+          isActive: highlightedIndex === index,
+          isSelected: selectedItems.indexOf(item) > -1,
         })}
         isNew={isNew}
       >
@@ -92,24 +95,10 @@ export class AsyncAutocomplete extends Component {
       </AutocompleteOption>
     );
 
-  getMinLenghtPropmt = (inputValue = '') => {
-    const diff = this.props.minLength - inputValue.trim().length;
-    if (this.props.minLength && diff > 0) {
-      return (
-        <AutocompletePrompt>
-          <FormattedMessage
-            id={'AsyncAutocomplete.dynamicSearchPromptText'}
-            defaultMessage={'Please enter {length} or more characters'}
-            values={{ length: diff }}
-          />
-        </AutocompletePrompt>
-      );
-    }
-    return '';
-  };
-
   render() {
     const {
+      options,
+      loading,
       onChange,
       onBlur,
       onFocus,
@@ -119,63 +108,94 @@ export class AsyncAutocomplete extends Component {
       error,
       touched,
       mobileDisabled,
-      value,
-      getURI,
-      makeOptions,
+      value = [],
       inputProps,
-      filterOption,
       creatable,
       createNewOption,
       isValidNewOption,
     } = this.props;
+    const { focused } = this.state;
+    const isClearable = !!(value && value.length && !disabled);
     return (
-      <Downshift onChange={onChange} itemToString={parseValueToString} selectedItem={value}>
+      <MultipleDownshift
+        onChange={onChange}
+        itemToString={parseValueToString}
+        selectedItems={value}
+      >
         {({
           getInputProps,
           getMenuProps,
           getItemProps,
           isOpen,
-          clearSelection,
-          selectedItem,
           inputValue,
           highlightedIndex,
+          removeItem,
+          removeAllItems,
           openMenu,
         }) => (
           <div className={cx('autocomplete-container')}>
-            <div className={cx('autocomplete')}>
-              <input
-                {...getInputProps({
-                  placeholder,
-                  onFocus: () => {
-                    !value && openMenu();
-                    onFocus();
-                  },
-                  onBlur,
-                  disabled,
-                  ...inputProps,
-                })}
-                className={cx('input', {
+            <div
+              className={cx('autocomplete', {
+                'mobile-disabled': mobileDisabled,
+                error,
+                touched,
+                focused,
+                disabled,
+              })}
+            >
+              <div
+                className={cx('autocomplete-input', {
+                  clearable: isClearable,
                   'mobile-disabled': mobileDisabled,
-                  error,
-                  touched,
-                  disabled,
                 })}
-              />
-              {selectedItem && !(disabled || mobileDisabled) && (
-                <button className={cx('input-control-btn')} onClick={clearSelection}>
+              >
+                <SelectedItems
+                  items={value}
+                  onRemoveItem={removeItem}
+                  disabled={disabled}
+                  parseValueToString={parseValueToString}
+                />
+                <input
+                  {...getInputProps({
+                    placeholder: !disabled ? placeholder : '',
+                    onFocus: () => {
+                      this.setState({
+                        focused: true,
+                      });
+                      openMenu();
+                      onFocus();
+                    },
+                    onKeyDown: (event) => {
+                      if (event.key === 'Backspace' && !inputValue && value.length) {
+                        removeItem(value[value.length - 1]);
+                      }
+                    },
+                    onBlur: () => {
+                      this.setState({
+                        focused: false,
+                      });
+                      onBlur();
+                    },
+                    disabled,
+                    ...inputProps,
+                  })}
+                  className={cx('input', { disabled })}
+                />
+              </div>
+              {isClearable && (
+                <button
+                  className={cx('input-control-btn', { 'mobile-disabled': mobileDisabled })}
+                  onClick={removeAllItems}
+                >
                   <i className={cx('cross-icon')}>{Parser(CrossIcon)}</i>
                 </button>
               )}
             </div>
-            <AutocompleteMenu
-              promptMessage={this.getMinLenghtPropmt(inputValue)}
-              {...getMenuProps({ isOpen })}
-            >
-              <AsyncAutocompleteOptions
-                getURI={getURI}
-                makeOptions={makeOptions}
+            <AutocompleteMenu {...getMenuProps({ isOpen })}>
+              <AutocompleteOptions
+                options={options}
+                loading={loading}
                 inputValue={(inputValue || '').trim()}
-                filterOption={filterOption}
                 creatable={creatable}
                 renderItem={this.renderItem(getItemProps, highlightedIndex, value)}
                 createNewOption={createNewOption}
@@ -185,7 +205,7 @@ export class AsyncAutocomplete extends Component {
             </AutocompleteMenu>
           </div>
         )}
-      </Downshift>
+      </MultipleDownshift>
     );
   }
 }

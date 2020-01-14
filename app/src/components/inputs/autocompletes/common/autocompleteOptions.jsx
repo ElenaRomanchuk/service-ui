@@ -17,17 +17,15 @@
 import { Component } from 'react';
 import PropTypes from 'prop-types';
 import { FormattedMessage } from 'react-intl';
-import { debounce, fetch, ERROR_CANCELED } from 'common/utils';
-import isEqual from 'react-fast-compare';
 import { AutocompletePrompt } from './autocompletePrompt';
 
-export class AsyncAutocompleteOptions extends Component {
+export class AutocompleteOptions extends Component {
   static propTypes = {
     children: PropTypes.func,
-    getURI: PropTypes.string,
-    makeOptions: PropTypes.func,
+    options: PropTypes.array,
+    loading: PropTypes.bool,
     inputValue: PropTypes.string,
-    filterOption: PropTypes.func,
+    minLength: PropTypes.number,
     renderItem: PropTypes.func.isRequired,
     createNewOption: PropTypes.func,
     creatable: PropTypes.bool,
@@ -37,77 +35,23 @@ export class AsyncAutocompleteOptions extends Component {
 
   static defaultProps = {
     children: null,
-    getURI: () => '',
-    makeOptions: (values) => values,
+    options: [],
+    loading: false,
     inputValue: '',
-    filterOption: () => true,
+    minLength: 1,
     creatable: false,
     createNewOption: (inputValue) => inputValue,
     parseValueToString: (value) => value || '',
     isValidNewOption: () => true,
   };
 
-  state = {
-    options: [],
-    loading: false,
-    inputValue: '',
+  getOptions = () => {
+    const { options, inputValue } = this.props;
+    return options.filter((option) => option.indexOf((inputValue || '').trim()) > -1);
   };
 
-  cancelToken = null;
-
-  componentDidMount() {
-    this.fetchData(this.props.inputValue);
-  }
-
-  componentDidUpdate({ inputValue: prevInputValue }) {
-    const { inputValue } = this.props;
-    if (!isEqual(prevInputValue, inputValue)) {
-      this.fetchData(inputValue);
-    }
-  }
-
-  componentWillUnmount() {
-    if (this.cancelToken) {
-      this.cancelToken();
-    }
-    this.cancelDebounce();
-  }
-
-  debouncedFetch = debounce((inputValue) => {
-    const { getURI, makeOptions, filterOption } = this.props;
-    if (this.cancelToken) {
-      this.cancelToken();
-    }
-    const uri = getURI(inputValue);
-    fetch(uri, {
-      abort: (cancelToken) => {
-        this.cancelToken = cancelToken;
-      },
-    })
-      .then((response) => {
-        this.cancelToken = null;
-        this.setState({
-          options: makeOptions(response).filter(filterOption),
-          loading: false,
-        });
-      })
-      .catch((error) => {
-        if (error.message !== ERROR_CANCELED) {
-          this.setState({
-            options: [],
-            loading: false,
-          });
-        }
-      });
-  }, 200);
-
-  fetchData = (inputValue) => {
-    this.setState({ loading: true });
-    this.cancelDebounce = this.debouncedFetch(inputValue);
-  };
-
-  getPrompt = () => {
-    const { options, loading } = this.state;
+  getPrompt = (options) => {
+    const { loading, minLength, inputValue } = this.props;
     if (loading) {
       return (
         <AutocompletePrompt>
@@ -116,7 +60,20 @@ export class AsyncAutocompleteOptions extends Component {
       );
     }
 
-    if (!options.length && !this.canCreateNewItem()) {
+    const diff = minLength - inputValue.trim().length;
+    if (minLength && diff > 0) {
+      return (
+        <AutocompletePrompt>
+          <FormattedMessage
+            id={'AsyncAutocomplete.dynamicSearchPromptText'}
+            defaultMessage={'Please enter {length} or more characters'}
+            values={{ length: diff }}
+          />
+        </AutocompletePrompt>
+      );
+    }
+
+    if (!options.length && !this.canCreateNewItem(options)) {
       return (
         <AutocompletePrompt>
           <FormattedMessage id={'AsyncAutocomplete.notFound'} defaultMessage={'Nothing found'} />
@@ -127,8 +84,7 @@ export class AsyncAutocompleteOptions extends Component {
     return '';
   };
 
-  canCreateNewItem = () => {
-    const { options } = this.state;
+  canCreateNewItem = (options) => {
     const { creatable, inputValue, parseValueToString, isValidNewOption } = this.props;
     return (
       creatable &&
@@ -137,12 +93,11 @@ export class AsyncAutocompleteOptions extends Component {
     );
   };
 
-  renderItems = () => {
-    const { options } = this.state;
+  renderItems = (options) => {
     const { inputValue, renderItem, createNewOption } = this.props;
     let newItem = null;
 
-    if (this.canCreateNewItem()) {
+    if (this.canCreateNewItem(options)) {
       newItem = createNewOption(inputValue);
       return [newItem, ...options].map((item, index) =>
         renderItem(item, index, newItem && index === 0),
@@ -153,9 +108,10 @@ export class AsyncAutocompleteOptions extends Component {
   };
 
   render() {
-    const prompt = this.getPrompt();
+    const options = this.getOptions();
+    const prompt = this.getPrompt(options);
     if (prompt) return prompt;
 
-    return this.renderItems();
+    return this.renderItems(options);
   }
 }

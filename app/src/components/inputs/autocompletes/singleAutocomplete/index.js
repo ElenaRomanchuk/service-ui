@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-export { AsyncAutocomplete } from './asyncAutocomplete';
+export { SingleAutocomplete } from './singleAutocomplete';

@@ -35,6 +35,11 @@
   box-sizing: border-box;
   &.clearable {
     padding-right: 20px;
+    &.mobile-disabled {
+      @media (max-width: $SCREEN_XS_MAX) {
+        padding-right: 0;
+      }
+    }
   }
 }
 
@@ -97,6 +102,11 @@
   padding: 0 6px;
   :active {
     border: 0;
+  }
+  &.mobile-disabled {
+    @media (max-width: $SCREEN_XS_MAX) {
+      display: none;
+    }
   }
 }
 
